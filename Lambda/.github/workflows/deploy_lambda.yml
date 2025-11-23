@@ -1,0 +1,42 @@
+name: AWS Lambda Deployment (Python)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy_lambda:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Sua versão Python
+
+      # 1. Prepara os Artefatos de Deploy movendo-os para um diretório temporário
+      - name: Prepare Deployment Artifacts
+        run: |
+          mkdir -p deploy_dir
+          # Move o código principal para o diretório de artefatos
+          mv lambda_handler.py deploy_dir/
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Sua região
+          
+      # 2. Implantação no AWS Lambda (Usando o novo campo)
+      - name: Deploy to AWS Lambda
+        uses: aws-actions/aws-lambda-deploy@v1
+        with:
+          function-name: FuncaoLambda
+          code-artifacts-dir: deploy_dir # <--- NOVO CAMPO CORRETO
+          publish: true
